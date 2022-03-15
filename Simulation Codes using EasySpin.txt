@@ -1,0 +1,43 @@
+%%%%Simulation Code for R-I ESR Spectra
+A = mt2mhz([0.791, -0.249, -0.120], gfree); % conversion to MHz
+Sys = struct(’g’, gfree, ’Nucs’, ’1H,1H,1H’, ’n’, [6, 4, 4],
+’A’, A, ’lw’, 0.02);
+Params = struct(’mwFreq’, 9.8, ’nPoints’, 8192);
+% Simulation of isotropic spectra %
+[B,spec] = garlic(Sys, Params);
+
+%%%%Simulation Code for R-II ESR Spectra
+A_Gauss = [4.34, -2.39, -0.65, -2.81, -0.23, 24.24]; % in Gauss
+A_MHz = mt2mhz(A_Gauss/10, gfree); % Gauss to MHz
+Sys = struct(’g’, 2.00316, ’Nucs’, ’14N,1H,1H,1H,1H,1H’,
+’n’, [2, 2, 2, 2, 2], ’A’, A_MHz, ’lwpp’, [0 0.006]);
+Params = struct(’mwFreq’, 9.878, ’CenterSweep’, [352 24],
+’nPoints’, 4096);
+% Simulation of isotropic spectra %
+[B, spec] = garlic(Sys, Params);
+
+%%%%Simulation Code for M-I ESR Spectra
+A_MHz = [-54 -54 -608; 52 42 42]; % in MHz
+Sys = struct(’g’, [2.0525 2.1994], ’Nucs’, ’63Cu,14N’,
+’n’, [1, 4], ’A’, A_MHz, ’tcorr’, 10^-7.5,
+’lw’, 0.3);
+Params = struct(’mwFreq’, 9.8); % GHz
+% Following setting is for treating the 14N nuclei
+% perturbationally using post-convolution.
+Opt.PostConvNucs = 2;
+Opt.LLKM = [16 0 0 4]; % axial symmetry of 63Cu+e system
+% Simulation of slow-motional spectra %
+[x,y] = chili(Sys, Params, Opt);
+
+%%%%Simulation Code for M-II ESR Spectra
+A_Cu = [0.0019 0.0203]; % in cm^-1
+A_N = [0.00145 0.0017]; % in cm^-1
+A_Frame = [0 0 0; 0 -1 0; -1 -1 0; -2 -1 0; -3 -1 0]*pi/2;
+A_MHz = [A_Cu;A_N;A_N;A_N;A_N]*30e3; cm^-1 to MHz
+Sys = struct(’g’, [2.05 2.19], ’Nucs’, ’63Cu,14N,14N,14N,14N’,
+’A’, A_MHz, ’AFrame’, A_Frame, ’lwpp’, [0 0.65]);
+Params = struct(’mwFreq’, 9.8, ’Range’, [225 375]);
+Opt.Method = ’perturb’;
+Opt.nKnots = [181 0];
+% Simulation of frozen spectra %
+[x,y] = pepper(Sys, Params, Opt);
